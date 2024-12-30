@@ -229,7 +229,13 @@ function M.format(opts, callback)
     opts.range = range_from_selection(opts.bufnr, mode)
   end
 
-  local formatters = M.resolve_formatters(opts.formatters, opts.bufnr, opts.stop_after_first)
+  local formatters = vim.tbl_filter(
+    ---@param info conform.FormatterInfo
+    function(info)
+      return info.available
+    end,
+    M.resolve_formatters(opts.formatters, opts.bufnr, opts.stop_after_first)
+  )
   local has_lsp = has_lsp_formatter(opts)
 
   if vim.tbl_isempty(formatters) and (not has_lsp or opts.lsp_format == "never") then
@@ -308,7 +314,13 @@ function M.list_formatters_to_run(bufnr)
   local opts = config.format_opts
 
   local formatter_names = opts.formatters
-  local formatters = M.resolve_formatters(formatter_names, opts.bufnr, opts.stop_after_first)
+  local formatters = vim.tbl_filter(
+    ---@param info conform.FormatterInfo
+    function(info)
+      return info.available
+    end,
+    M.resolve_formatters(formatter_names, opts.bufnr, opts.stop_after_first)
+  )
 
   local has_lsp = has_lsp_formatter(opts)
 
