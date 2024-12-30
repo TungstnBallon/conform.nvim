@@ -47,18 +47,20 @@ function M.build_config(bufnr, format_opts)
   }
 
   vim.validate("vim.g.conform", vim.g.conform, { "table", "nil" }, false, "conform.Config")
-  vim.validate(
-    "vim.b[bufnr].conform",
-    vim.b[bufnr].conform,
-    { "table", "nil" },
-    false,
-    "conform.Config"
-  )
+  if vim.api.nvim_buf_is_valid(bufnr) then
+    vim.validate(
+      "vim.b[bufnr].conform",
+      vim.b[bufnr].conform,
+      { "table", "nil" },
+      false,
+      "conform.Config"
+    )
+  end
 
   local config = vim.tbl_deep_extend(
     "keep",
     { format_opts = format_opts or {} },
-    vim.b[bufnr].conform or {} --[[@as conform.Config]],
+    vim.api.nvim_buf_is_valid(bufnr) and vim.b[bufnr].conform or {} --[[@as conform.Config]],
     vim.g.conform or {} --[[@as conform.Config]],
     defaults
   )
