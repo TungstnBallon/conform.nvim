@@ -33,7 +33,6 @@ function M.build_config(bufnr, format_opts)
   local defaults = {
     overrides = {},
     notify_on_error = true,
-    notify_no_formatters = true,
     format_opts = {
       formatters = {},
       timeout_ms = 1000,

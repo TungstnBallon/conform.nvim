@@ -113,11 +113,9 @@
 ---@field overrides? table<string, conform.FormatterConfigOverride|fun(bufnr: integer): nil|conform.FormatterConfigOverride> Custom formatters and overrides for built-in formatters.
 ---@field formatters? string[] List of formatters to run. Defaults to []. You will probably want to set this explicitly in an ftplugin or `FileType` autocmd.
 ---@field notify_on_error? boolean Conform will notify you when a formatter errors (default true).
----@field notify_no_formatters? boolean Conform will notify you when no formatters are available for the buffer (default true).
 ---@field format_opts? conform.DefaultFiletypeFormatOpts The default options to use when calling conform.format().
 
 ---@class (exact) conform.ResolvedConfig: conform.Config
 ---@field overrides table<string, conform.FormatterConfigOverride> Custom formatters and overrides for built-in formatters.
 ---@field notify_on_error boolean Conform will notify you when a formatter errors (default true).
----@field notify_no_formatters boolean Conform will notify you when no formatters are available for the buffer (default true).
 ---@field format_opts conform.ResolvedFormatOpts The options to use when calling conform.format(). Formatters to use are specified here.
