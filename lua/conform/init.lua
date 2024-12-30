@@ -87,26 +87,14 @@ end
 ---@private
 ---@param names string[]
 ---@param bufnr integer
----@param warn_on_missing boolean
 ---@param stop_after_first boolean
 ---@return conform.FormatterInfo[]
-function M.resolve_formatters(names, bufnr, warn_on_missing, stop_after_first)
+function M.resolve_formatters(names, bufnr, stop_after_first)
   local all_info = {}
-  local function add_info(info, warn)
-    if info.available then
-      table.insert(all_info, info)
-    elseif warn then
-      vim.notify(
-        string.format("Formatter '%s' unavailable: %s", info.name, info.available_msg),
-        vim.log.levels.WARN
-      )
-    end
-    return info.available
-  end
 
   for _, name in ipairs(names) do
     local info = M.get_formatter_info(name, bufnr)
-    add_info(info, warn_on_missing)
+    table.insert(all_info, info)
 
     if stop_after_first and #all_info > 0 then
       break
@@ -241,8 +229,7 @@ function M.format(opts, callback)
     opts.range = range_from_selection(opts.bufnr, mode)
   end
 
-  local formatters =
-    M.resolve_formatters(opts.formatters, opts.bufnr, not opts.quiet, opts.stop_after_first)
+  local formatters = M.resolve_formatters(opts.formatters, opts.bufnr, opts.stop_after_first)
   local has_lsp = has_lsp_formatter(opts)
 
   if vim.tbl_isempty(formatters) and (not has_lsp or opts.lsp_format == "never") then
@@ -307,7 +294,7 @@ end
 function M.list_formatters(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local formatters = M.build_config(bufnr).format_opts.formatters
-  return M.resolve_formatters(formatters, bufnr, false, false)
+  return M.resolve_formatters(formatters, bufnr, false)
 end
 
 ---Get the exact formatters that will be run for a buffer.
@@ -321,7 +308,7 @@ function M.list_formatters_to_run(bufnr)
   local opts = config.format_opts
 
   local formatter_names = opts.formatters
-  local formatters = M.resolve_formatters(formatter_names, opts.bufnr, false, opts.stop_after_first)
+  local formatters = M.resolve_formatters(formatter_names, opts.bufnr, opts.stop_after_first)
 
   local has_lsp = has_lsp_formatter(opts)
 
