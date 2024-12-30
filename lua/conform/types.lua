@@ -99,7 +99,6 @@
 ---@field lsp_format conform.LspFormatOpts Configure if and when LSP should be used for formatting. Defaults to "never".
 
 ---@class (exact) conform.DefaultFormatOpts
----@field formatters? string[] List of formatters to run. Defaults to []. You will probably want to set this explicitly in an ftplugin or `FileType` autocmd.
 ---@field timeout_ms? integer Time in milliseconds to block for formatting. Defaults to 1000. No effect if async = true.
 ---@field lsp_format? conform.LspFormatOpts Configure if and when LSP should be used for formatting. Defaults to "never".
 ---@field quiet? boolean Don't show any notifications for warnings or failures. Defaults to false.
@@ -112,9 +111,10 @@
 
 ---@class (exact) conform.Config
 ---@field overrides? table<string, conform.FormatterConfigOverride|fun(bufnr: integer): nil|conform.FormatterConfigOverride> Custom formatters and overrides for built-in formatters.
+---@field formatters? string[] List of formatters to run. Defaults to []. You will probably want to set this explicitly in an ftplugin or `FileType` autocmd.
 ---@field notify_on_error? boolean Conform will notify you when a formatter errors (default true).
 ---@field notify_no_formatters? boolean Conform will notify you when no formatters are available for the buffer (default true).
----@field format_opts? conform.DefaultFormatOpts The default options to use when calling conform.format(). Specify the formatters to use here.
+---@field format_opts? conform.DefaultFiletypeFormatOpts The default options to use when calling conform.format().
 
 ---@class (exact) conform.ResolvedConfig: conform.Config
 ---@field overrides table<string, conform.FormatterConfigOverride> Custom formatters and overrides for built-in formatters.
