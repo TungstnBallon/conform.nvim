@@ -75,6 +75,11 @@ function M.build_config(bufnr, format_opts)
     end,
     config.overrides
   )
+
+  config.format_opts.formatters =
+    vim.tbl_extend("force", config.format_opts.formatters, config.formatters or {})
+  config.formatters = nil
+
   return config --[[@as conform.ResolvedConfig]]
 end
 
@@ -149,12 +154,15 @@ end
 ---Handle errors and maybe run LSP formatting after cli formatters complete
 ---@param err? conform.Error
 ---@param did_edit? boolean
-local function handle_formatter_result(err, did_edit)
+---@param config conform.ResolvedConfig
+---@param has_lsp boolean
+---@param callback fun(err: nil|string, did_edit: nil|boolean) Called once formatting has completed
+local function handle_formatter_result(err, did_edit, config, has_lsp, callback)
   if err then
     local level = require("conform.errors").level_for_code(err.code)
     require("conform.log").log(level, err.message)
     ---@type boolean?
-    local should_notify = not opts.quiet and level >= vim.log.levels.WARN
+    local should_notify = not config.format_opts.quiet and level >= vim.log.levels.WARN
     -- Execution errors have special handling. Maybe should reconsider this.
     local notify_msg = err.message
     if require("conform.errors").is_execution_error(err.code) then
@@ -166,28 +174,31 @@ local function handle_formatter_result(err, did_edit)
     end
   end
   local err_message = err and err.message
-  if not err_message and not vim.api.nvim_buf_is_valid(opts.bufnr) then
+  if not err_message and not vim.api.nvim_buf_is_valid(config.format_opts.bufnr) then
     err_message = "buffer was deleted"
   end
   if err_message then
     return callback(err_message)
   end
 
-  if opts.dry_run and did_edit then
+  if config.format_opts.dry_run and did_edit then
     callback(nil, true)
-  elseif opts.lsp_format == "last" and has_lsp then
+  elseif config.format_opts.lsp_format == "last" and has_lsp then
     require("conform.log").debug(
       "Running LSP formatter on %s",
-      vim.api.nvim_buf_get_name(opts.bufnr)
+      vim.api.nvim_buf_get_name(config.format_opts.bufnr)
     )
-    require("conform.lsp_format").format(opts, callback)
+    require("conform.lsp_format").format(config.format_opts, callback)
   else
     callback(nil, did_edit)
   end
 end
 
 ---Run the resolved formatters on the buffer
-local function run_cli_formatters(cb)
+---@param cb fun(err: nil|conform.Error, did_edit: nil|boolean) Called once formatting has completed
+---@param formatters conform.FormatterInfo[]
+---@param opts conform.ResolvedFormatOpts
+local function run_cli_formatters(cb, formatters, opts)
   local resolved_names = vim.tbl_map(function(f)
     return f.name
   end, formatters)
@@ -263,7 +274,9 @@ function M.format(opts, callback)
       or not has_lsp
     then
       -- HINT: `opts.lsp_format == "last"` is taken care of in `handle_result`
-      run_cli_formatters(handle_formatter_result)
+      run_cli_formatters(function(err, did_edit)
+        handle_formatter_result(err, did_edit, config, has_lsp, callback)
+      end, formatters, opts)
       return true
     elseif opts.lsp_format == "first" then
       -- LSP formatting, then other formatters
@@ -276,8 +289,8 @@ function M.format(opts, callback)
           return callback(err, did_edit)
         end
         run_cli_formatters(function(err2, did_edit2)
-          handle_formatter_result(err2, did_edit or did_edit2)
-        end)
+          handle_formatter_result(err2, did_edit or did_edit2, config, has_lsp, callback)
+        end, formatters, opts)
       end)
       return true
     else
